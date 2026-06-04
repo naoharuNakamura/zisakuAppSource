@@ -3,10 +3,13 @@
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
+import { ROUTES, ROUTE_NAMES } from "../constants/types";
+import { UI_TEXTS } from "../constants/messages";
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore()
+const authStore = useAuthStore();
+const text = UI_TEXTS.login;
 
 const userEmail = ref("");
 const userPassword = ref("");
@@ -19,7 +22,7 @@ const handleLogin = async () => {
             userPassword: userPassword.value
         });
 
-        const redirectPath = route.query.redirect as string || "/search";
+        const redirectPath = (route.query.redirect as string) || ROUTES.SEARCH;
         router.push(redirectPath);
     } catch (error) {
         hasError.value = true;
@@ -40,27 +43,26 @@ const handleLogin = async () => {
             <form class="login-form" @submit.prevent>
 
                 <div class="login-group">
-                    <label for="userEmail">メールアドレス</label>
-                    <input v-model="userEmail" id="userEmail" type="text" placeholder="メールアドレスを入力してください" class="form-control">
+                    <label for="userEmail">{{ text.emailLabel }}</label>
+                    <input v-model="userEmail" id="userEmail" type="text" :placeholder="text.emailPlaceholder" class="form-control">
                 </div>
 
                 <div class="form-group">
-                    <label for="userPassword">パスワード</label>
-                    <input v-model="userPassword" id="userPassword" type="password" placeholder="パスワードを入力してください"
+                    <label for="userPassword">{{ text.passwordLabel }}</label>
+                    <input v-model="userPassword" id="userPassword" type="password" :placeholder="text.passwordPlaceholder"
                         class="form-control" />
                 </div>
 
                 <button @click="handleLogin" type="submit" class="btn-primary">
-                    ログイン
+                    {{ text.submitButton }}
                 </button>
 
             </form>
 
             <div class="signup-redirect">
 
-                <p>アカウントをお持ちでないですか？</p>
-                <RouterLink to="/signup" class="signup-link-btn">新規会員登録はこちら</RouterLink>
-
+                <p>{{ text.signupHint }}</p>
+                <RouterLink :to="{ name: ROUTE_NAMES.SIGNUP }" class="signup-link-btn">{{ text.signupLink }}</RouterLink>
             </div>
 
         </div>

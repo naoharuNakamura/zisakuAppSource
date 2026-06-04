@@ -4,13 +4,11 @@ import com.zisakuapp.zisaku_backend.model.Restaurant;
 import com.zisakuapp.zisaku_backend.service.RestaurantService;
 import com.zisakuapp.zisaku_backend.dto.RestaurantSearchRequest;
 import com.zisakuapp.zisaku_backend.dto.RestaurantResponse;
+import com.github.pagehelper.PageInfo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 
 import java.util.List;
 
@@ -43,26 +41,30 @@ public class RestaurantController {
 
     @GetMapping("/result")
     public List<Restaurant> getAllRestaurants() {
-        return restaurantService.getAllRestaurants();
+        // 💡 ここにデバッグ追加
+        List<Restaurant> list = restaurantService.getAllRestaurants();
+        System.out.println(
+                "====== [Debug] Controller: size of result = " + (list != null ? list.size() : "null") + " ======");
+
+        return list;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RestaurantResponse> getRestaurantDetail(@PathVariable(name = "id") Long id) {
-        System.out.println("★詳細リクエスト受信 ID: " + id);
+    public ResponseEntity<RestaurantResponse> getRestaurantDetail(@PathVariable(name = "id") int id) {
+        System.out.println("Detail Request ID: " + id);
         return ResponseEntity.ok(restaurantService.getRestaurantDetail(id));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<RestaurantResponse>> searchRestaurants(
+    public ResponseEntity<PageInfo<RestaurantResponse>> searchRestaurants(
             @ModelAttribute RestaurantSearchRequest request,
-            // 💡 引数を Pageable に変更し、デフォルト値をアノテーションで指定
-            @PageableDefault(page = 0, size = 50) Pageable pageable) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "50") int size) {
 
-        System.out.println("★検索リクエスト受信: " + request);
-        System.out.println("★適用されたソート・ページング: " + pageable);
+        System.out.println("Search Query: " + request);
+        System.out.println("Addapted Page Sorting: " + "page=" + page + ", size=" + size);
 
-        // 💡 手動での PageRequest.of(page, size) の組み立ては不要になります！
-        Page<RestaurantResponse> results = restaurantService.searchRestaurants(request, pageable);
+        PageInfo<RestaurantResponse> results = restaurantService.searchRestaurants(request, page, size);
         return ResponseEntity.ok(results);
     }
 }

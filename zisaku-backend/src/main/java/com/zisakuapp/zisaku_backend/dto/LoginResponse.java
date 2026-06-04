@@ -1,8 +1,10 @@
 package com.zisakuapp.zisaku_backend.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor    // ← Spring BootのJSON変換用（保険）
 public class LoginResponse {
     private String token;
     private UserResponse user;

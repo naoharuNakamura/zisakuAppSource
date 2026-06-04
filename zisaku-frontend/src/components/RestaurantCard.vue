@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import StarRatings from 'vue3-star-ratings';
-import { useAuthStore, type Restaurant } from '../stores/auth';
+import { useAuthStore } from '../stores/auth';
+import type { Restaurant } from '../constants/types';
+import { ROUTE_NAMES } from '../constants/types';
+import { UI_TEXTS } from '../constants/messages';
 
-const authStore = useAuthStore()
+const authStore = useAuthStore();
+const text = UI_TEXTS.common;
 const props = defineProps<{
   restaurant: Restaurant
 }>()
@@ -19,9 +23,9 @@ const restaurant = props.restaurant
       <label :for="'fav-' + restaurant.restaurantId" class="heart-icon"></label>
     </div>
 
-    <RouterLink :to="`/result-detail/${restaurant.restaurantId}`" class="card-link">
+    <RouterLink :to="{ name: ROUTE_NAMES.RESULT_DETAIL, params: { restaurantId: restaurant.restaurantId } }" class="card-link">
       <div class="image-wrapper">
-        <img :src="restaurant.restaurantImg" alt="店舗画像" />
+        <img :src="restaurant.restaurantImg" :alt="text.restaurantImageAlt" />
       </div>
 
       <div class="card-label">

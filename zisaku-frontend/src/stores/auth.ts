@@ -3,36 +3,13 @@
 import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import { apiService } from '../services/api';
-
-export interface Restaurant {
-    restaurantId: number;
-    restaurantName: string;
-    restaurantImg: string;
-    restaurantRating: number;
-    restaurantGenre: string;
-    restaurantPriceRange: string;
-    restaurantArea: string;
-    restaurantOpenHour: string;
-    restaurantCloseHour: string;
-    restaurantAddress: string;
-    restaurantPhone: string;
-    restaurantUrl: string;
-    restaurantClosedDays: string;
-}
-
-// パスワードなどの機密情報を持たない、安全なユーザー情報
-export interface UserResponse {
-    userId: number;
-    userName: string;
-    userEmail: string;
-    userPhone: string;
-    favoriteIds?: number[]; // お気に入りの管理用
-}
+import {type UserResponse, type Restaurant, STORAGE_KEYS } from '../constants/types';
+import { ERROR_MESSAGES } from '../constants/messages';
 
 export const useAuthStore = defineStore('auth', () => {
     // ① 状態（State）
 
-    const savedUser = localStorage.getItem('currentUser');
+    const savedUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
     const currentUser = ref<UserResponse | null>(savedUser ? JSON.parse(savedUser) : null);
     const favoriteRestaurants = ref<Restaurant[]>([]);
 
@@ -45,9 +22,9 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await apiService.getFavoritesByUserId(userId);
             currentUser.value.favoriteIds = response.data;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser.value));
+            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser.value));
         } catch (error) {
-            console.error("お気に入りIDの取得失敗:", error);
+            console.error(ERROR_MESSAGES.FAVORITE_ID_FETCH_FAILED, error);
         }
     };
 
@@ -57,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await apiService.getFavoriteDetails(userId);
             favoriteRestaurants.value = response.data;
         } catch (error) {
-            console.error("お気に入り詳細の取得失敗:", error);
+            console.error(ERROR_MESSAGES.FAVORITE_DETAILS_FETCH_FAILED, error);
         }
     };
 
@@ -74,17 +51,17 @@ export const useAuthStore = defineStore('auth', () => {
             const { token, user } = response.data;
 
             // トークンを保存（これがないとインターセプターで送信されません）
-            localStorage.setItem('token', token);
+            localStorage.setItem(STORAGE_KEYS.TOKEN, token);
 
             currentUser.value = user;
 
             await fetchFavoriteIds(user.userId);
             await fetchFavoriteRestaurants(user.userId);
 
-            localStorage.setItem('currentUser', JSON.stringify(currentUser.value));
+            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser.value));
             return true;
         } catch (error) {
-            console.error("ログインエラー:", error);
+            console.error(ERROR_MESSAGES.LOGIN_FAILED_LOG, error);
             throw error;
         }
     };
@@ -99,10 +76,10 @@ export const useAuthStore = defineStore('auth', () => {
             updatedUserFromServer.favoriteIds = currentUser.value?.favoriteIds || [];
             currentUser.value = updatedUserFromServer;
 
-            localStorage.setItem('currentUser', JSON.stringify(currentUser.value));
+            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser.value));
             return true;
         } catch (error) {
-            console.error("プロフィール更新エラー:", error);
+            console.error(ERROR_MESSAGES.PROFILE_UPDATE_FAILED_LOG, error);
             throw error;
         }
     };
@@ -110,8 +87,8 @@ export const useAuthStore = defineStore('auth', () => {
     const logout = () => {
         currentUser.value = null;
         favoriteRestaurants.value = [];
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('token');
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
     };
 
     const isFavorite = (restaurantId: number) => {
@@ -130,7 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
             await fetchFavoriteIds(currentUser.value.userId);
             await fetchFavoriteRestaurants(currentUser.value.userId);
         } catch (error) {
-            console.error("お気に入り更新失敗:", error);
+            console.error(ERROR_MESSAGES.FAVORITE_UPDATE_FAILED_LOG, error);
         }
     };
 

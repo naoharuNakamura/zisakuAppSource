@@ -1,25 +1,21 @@
 package com.zisakuapp.zisaku_backend.dto;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Data
+@Getter
+@Setter
 public class UserRestaurantRequest {
-    private Long userId;
-    private Long restaurantId;
+    private int userId;
+    private int restaurantId;
 
-    public Long getUserId() {
+    public int getUserId() {
         return userId;
     }
 
-    public Long getRestaurantId() {
+    public int getRestaurantId() {
         return restaurantId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public void setRestaurantId(Long restaurantId) {
-        this.restaurantId = restaurantId;
     }
 }

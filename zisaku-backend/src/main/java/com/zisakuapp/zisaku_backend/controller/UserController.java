@@ -4,6 +4,7 @@ import com.zisakuapp.zisaku_backend.model.User;
 import com.zisakuapp.zisaku_backend.service.*;
 import com.zisakuapp.zisaku_backend.dto.UserLoginRequest;
 import com.zisakuapp.zisaku_backend.dto.UserResponse;
+import com.zisakuapp.zisaku_backend.dto.UserSignupRequest;
 import com.zisakuapp.zisaku_backend.dto.LoginResponse; // 💡 追加
 import com.zisakuapp.zisaku_backend.security.JwtUtil;
 
@@ -26,17 +27,22 @@ public class UserController {
     @Autowired
     private AuthenticationManager authenticationManager; // 💡 追加
 
-    // ユーザー作成（サインアップ用）
     @PostMapping("/signup")
-    public ResponseEntity<?> createUser(@RequestBody User user) {
+    public ResponseEntity<?> createUser(@RequestBody UserSignupRequest request) { // DTOに変更
 
-        // 💡 データベースに保存する直前に、最終チェックを行う
+        // 1. DTOからUserモデルへ変換
+        User user = new User();
+        user.setUserName(request.getUserName());
+        user.setUserEmail(request.getUserEmail());
+        user.setUserPassword(request.getUserPassword());
+        user.setUserPhone(request.getUserPhone());
+
+        // 2. 存在チェック
         if (userService.existsByUserEmail(user.getUserEmail())) {
-            // 重複していたら、500エラーではなく「409 Conflict」として返す
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
         }
 
-        // 重複していなければ通常通り保存する
+        // 3. 保存
         UserResponse createdUser = userService.createUser(user);
         return ResponseEntity.ok(createdUser);
     }
@@ -46,12 +52,15 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserLoginRequest loginRequest) {
         try {
-            // 💡 1. 認証処理を Spring Security に丸投げする！
-            // パスワードの暗号化検証なども自動でやってくれます
+            System.out.println("====== [Controller] Reached to Method ======");
+            System.out.println("Email from Front: " + loginRequest.getUserEmail());
+            System.out.println("====== [Debug] AuthenticationManager Before ======");
+            System.out.println(loginRequest.getUserPassword());
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getUserEmail(),
                             loginRequest.getUserPassword()));
+            System.out.println("====== [Debug] Completed ======");
 
             // 💡 2. 認証が通ったら、DBからユーザー情報を取ってくる
             // (UserService の authenticateUser メソッドはもう使わないので、findById等で取得)
@@ -83,8 +92,8 @@ public class UserController {
         }
     }
 
-    @GetMapping("/check-email")
-    public ResponseEntity<Boolean> checkEmailExists(@RequestParam String userEmail) {
+    @GetMapping("/check-email/{userEmail:.+}")
+    public ResponseEntity<Boolean> checkEmailExists(@PathVariable("userEmail") String userEmail) {
         // サービス層で存在チェックを行い、結果（boolean）を返す
         boolean exists = userService.existsByUserEmail(userEmail);
         return ResponseEntity.ok(exists);

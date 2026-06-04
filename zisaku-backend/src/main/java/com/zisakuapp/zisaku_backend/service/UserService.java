@@ -1,8 +1,8 @@
 package com.zisakuapp.zisaku_backend.service;
 
 import com.zisakuapp.zisaku_backend.model.User;
-import com.zisakuapp.zisaku_backend.repository.UserRepository;
 import com.zisakuapp.zisaku_backend.dto.UserResponse;
+import com.zisakuapp.zisaku_backend.mapper.UserMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,38 +14,37 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserMapper userMapper;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public UserResponse getUserById(Long userId) {
-        User user = userRepository.findByUserId(userId)
+    public UserResponse getUserById(int userId) {
+        User user = userMapper.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return new UserResponse(user);
     }
 
     public UserResponse getUserByUserEmail(String userEmail) {
-        User user = userRepository.findByUserEmail(userEmail)
+        User user = userMapper.findByUserEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + userEmail));
         return new UserResponse(user);
     }
 
     public boolean existsByUserEmail(String userEmail) {
-        return userRepository.existsByUserEmail(userEmail);
+        return userMapper.existsByUserEmail(userEmail);
     }
 
     public UserResponse createUser(User user) {
         user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
-        User savedUser = userRepository.save(user);
-        return new UserResponse(savedUser);
+        userMapper.insert(user);
+        return new UserResponse(user);
     }
 
-// 💡 安全なデータ詰め替えロジックに修正
     public User updateProfile(User updatedUser) {
         System.out.println(updatedUser);
         // 1. 既存のユーザーをIDで検索
-        User existingUser = userRepository.findByUserId(updatedUser.getUserId())
+        User existingUser = userMapper.findByUserId(updatedUser.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + updatedUser.getUserId()));
         System.out.println("This is"+existingUser);
         
@@ -66,7 +65,8 @@ public class UserService {
         }
         
         // 4. 保存して返す
-        return userRepository.save(existingUser);
+        userMapper.update(existingUser);
+        return existingUser;
     }
 
 }

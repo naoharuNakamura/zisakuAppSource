@@ -1,8 +1,12 @@
 package com.zisakuapp.zisaku_backend.dto;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Data
+@Getter
+@Setter
 public class RestaurantSearchRequest {
     private String restaurantName;
     private String restaurantRating;      // 修正：restaurant_rating → restaurantRating
@@ -11,52 +15,11 @@ public class RestaurantSearchRequest {
     private String restaurantArea;        // 修正：restaurant_area → restaurantArea
     private Boolean isAndSearch;
 
-    // Getter と Setter
-    public String getRestaurantRating() {
-        return restaurantRating;
-    }
+    private Double minRating;
+    private Double maxRating;
 
-    public String getRestaurantGenre() {
-        return restaurantGenre;
-    }
+    private String priceNum1;
+    private String priceNum2;
 
-    public String getRestaurantPriceRange() {
-        return restaurantPriceRange;
-    }
-
-    public String getRestaurantArea() {
-        return restaurantArea;
-    }
-
-    public void setRestaurantRating(String restaurantRating) {
-        this.restaurantRating = restaurantRating;
-    }
-
-    public void setRestaurantGenre(String restaurantGenre) {
-        this.restaurantGenre = restaurantGenre;
-    }
-
-    public void setRestaurantPriceRange(String restaurantPriceRange) {
-        this.restaurantPriceRange = restaurantPriceRange;
-    }
-
-    public void setRestaurantArea(String restaurantArea) {
-        this.restaurantArea = restaurantArea;
-    }
-
-    public String getRestaurantName() {
-        return restaurantName;
-    }
-
-    public void setRestaurantName(String restaurantName) {
-        this.restaurantName = restaurantName;
-    }
-
-    public Boolean getIsAndSearch() {
-        return isAndSearch;
-    }
-
-    public void setIsAndSearch(Boolean isAndSearch) {
-        this.isAndSearch = isAndSearch;
-    }
+    private String sort;
 }

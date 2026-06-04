@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { ROUTES, ROUTE_NAMES } from '../constants/types'
 
 // components から各画面（コンポーネント）をインポート
 import siteLogin from '../components/siteLogin.vue'
@@ -12,37 +13,37 @@ import siteMyPage from '../components/siteMyPage.vue'
 // パスと画面の紐付け定義
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/',
-    redirect: '/login' // 初期アクセス時はログイン画面にリダイレクト
+    path: ROUTES.HOME,
+    redirect: { name: ROUTE_NAMES.LOGIN } // 初期アクセス時はログイン画面にリダイレクト
   },
   {
-    path: '/login',
-    name: 'Login',
+    path: ROUTES.LOGIN,
+    name: ROUTE_NAMES.LOGIN,
     component: siteLogin
   },
   {
-    path: '/signup',
-    name: 'SignUp',
+    path: ROUTES.SIGNUP,
+    name: ROUTE_NAMES.SIGNUP,
     component: siteSignUp
   },
   {
-    path: '/search',
-    name: 'Search',
+    path: ROUTES.SEARCH,
+    name: ROUTE_NAMES.SEARCH,
     component: siteSearch
   },
   {
-    path: '/result',
-    name: 'Result',
+    path: ROUTES.RESULT,
+    name: ROUTE_NAMES.RESULT,
     component: siteResult
   },
   {
-    path: '/result-detail/:restaurantId', // 店舗IDをURLパラメータとして受け取れるように設定
-    name: 'ResultDetail',
+    path: ROUTES.RESULT_DETAIL_PATH, // 店舗IDをURLパラメータとして受け取れるように設定
+    name: ROUTE_NAMES.RESULT_DETAIL,
     component: siteResultDetail
   },
   {
-    path: '/mypage',
-    name: 'MyPage',
+    path: ROUTES.MYPAGE,
+    name: ROUTE_NAMES.MYPAGE,
     component: siteMyPage
   }
 ]
@@ -57,12 +58,13 @@ export const router = createRouter({
 router.beforeEach((to, _from) => {
   const authStore = useAuthStore();
   // マイページへのアクセス、かつ未ログインの場合
-  if (to.path !== '/login' && to.path !== '/signup' && !authStore.isLoggedIn) {
-    return "/login";
+  if (to.name !== ROUTE_NAMES.LOGIN && to.name !== ROUTE_NAMES.SIGNUP && !authStore.isLoggedIn) {
+    return { name: ROUTE_NAMES.LOGIN };
   }
 });
 
 export const goToResult = () => {
-  router.push('/result')
+  router.push({ name: ROUTE_NAMES.RESULT });
 }
+
 

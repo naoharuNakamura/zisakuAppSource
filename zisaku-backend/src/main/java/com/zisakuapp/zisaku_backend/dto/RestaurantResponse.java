@@ -3,7 +3,7 @@ package com.zisakuapp.zisaku_backend.dto;
 import com.zisakuapp.zisaku_backend.model.Restaurant;
 
 public class RestaurantResponse {
-    private Long restaurantId;
+    private int restaurantId;
     private String restaurantName;
     private String restaurantGenre;
     private String restaurantArea;
@@ -17,7 +17,7 @@ public class RestaurantResponse {
     private String restaurantAddress;
     private String restaurantUrl;
 
-    public RestaurantResponse(Long restaurantId, String name, String genre, String area, String imageUrl, Double restaurantRating, String priceRange, String openHour, String closeHour, String closedDays, String phone, String address, String url
+    public RestaurantResponse(int restaurantId, String name, String genre, String area, String imageUrl, Double restaurantRating, String priceRange, String openHour, String closeHour, String closedDays, String phone, String address, String url
     ) {
         this.restaurantId = restaurantId;
         this.restaurantRating = restaurantRating;
@@ -53,7 +53,7 @@ public class RestaurantResponse {
     }
 
     // ゲッター群
-    public Long getRestaurantId() { return restaurantId; }
+    public int getRestaurantId() { return restaurantId; }
     public String getRestaurantName() { return restaurantName; }
     public String getRestaurantGenre() { return restaurantGenre; }
     public String getRestaurantArea() { return restaurantArea; }

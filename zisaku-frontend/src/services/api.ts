@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useAuthStore } from "../stores/auth";
+import { API_ENDPOINTS } from "../constants/types";
 
 const apiClient = axios.create({
-    baseURL: "/",
+    // baseURL: 'http://localhost:8080',
     headers: {
         "Content-Type": "application/json",
     },
@@ -44,35 +45,35 @@ export default apiClient;
 
 export const apiService = {
     getRestaurantDetail(restaurantId: number) {
-        return apiClient.get(`/api/m_restaurant/${restaurantId}`);
+        return apiClient.get(API_ENDPOINTS.RESTAURANT.DETAIL(restaurantId));
     },
 
     login(data: any) {
-        return apiClient.post(`/api/m_user/login`, data);
+        return apiClient.post(API_ENDPOINTS.USER.LOGIN, data);
     },
 
     getEmailExists(userEmail: string) {
-        return apiClient.get(`/api/m_user/check-email?userEmail=${userEmail}`);
+        return apiClient.get(API_ENDPOINTS.USER.CHECK_EMAIL(userEmail));
     },
     
     signup(data: any) {
-        return apiClient.post(`/api/m_user/signup`, data);
+        return apiClient.post(API_ENDPOINTS.USER.SIGNUP, data);
     },
 
     updateProfile(data: any) {
-        return apiClient.put(`/api/m_user/profile`, data);
+        return apiClient.put(API_ENDPOINTS.USER.UPDATE_PROFILE, data);
     },
 
     toggleFavorite({ userId, restaurantId }: { userId: number; restaurantId: number }) {
-        return apiClient.post(`/api/t_user_restaurant/toggle`, { userId, restaurantId });
+        return apiClient.post(API_ENDPOINTS.USER_RESTAURANT.TOGGLE, { userId, restaurantId });
     },
 
     getFavoritesByUserId(userId: number) {
-        return apiClient.get(`/api/t_user_restaurant/user/${userId}`);
+        return apiClient.get(API_ENDPOINTS.USER_RESTAURANT.GET_USER_FAVORITES(userId));
     },
 
     getFavoriteDetails(userId: number) {
-        return apiClient.get(`/api/t_user_restaurant/user/${userId}/details`);
+        return apiClient.get(API_ENDPOINTS.USER_RESTAURANT.GET_USER_FAVORITE_DETAILS(userId));
     },
 
     searchRestaurants: (searchParams: {
@@ -83,30 +84,30 @@ export const apiService = {
         restaurantArea?: string;
         isAndSearch: boolean;
     }) => {
-        return apiClient.get('/api/m_restaurant/search', { params: searchParams });
+        return apiClient.get(API_ENDPOINTS.RESTAURANT.SEARCH, { params: searchParams });
     },
 
     getgenres() {
-        return apiClient.get(`/api/m_restaurant/genres`);
+        return apiClient.get(API_ENDPOINTS.RESTAURANT.GENRES);
     },
 
     getPriceRanges() {
-        return apiClient.get(`/api/m_restaurant/price-ranges`);
+        return apiClient.get(API_ENDPOINTS.RESTAURANT.PRICE_RANGES);
     },
 
     getAreas() {
-        return apiClient.get(`/api/m_restaurant/areas`);
+        return apiClient.get(API_ENDPOINTS.RESTAURANT.AREAS);
     },
 
     getRatings() {
-        return apiClient.get(`/api/m_restaurant/ratings`);
+        return apiClient.get(API_ENDPOINTS.RESTAURANT.RATINGS);
     },
 
     getMemoRestaurant({ userId, restaurantId }: { userId: number; restaurantId: number }) {
-        return apiClient.get(`/api/t_user_restaurant/user/${userId}/restaurant/${restaurantId}`);
+        return apiClient.get(API_ENDPOINTS.USER_RESTAURANT.GET_MEMO(userId, restaurantId));
     },
 
     editMemoRestaurant({ userId, restaurantId, memo }: { userId: number; restaurantId: number; memo: string }) {
-        return apiClient.post(`/api/t_user_restaurant/result-detail/${restaurantId}`, { userId, memo });
+        return apiClient.post(API_ENDPOINTS.USER_RESTAURANT.EDIT_MEMO(userId, restaurantId), { userId, memo });
     }
 };

@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import { ROUTE_NAMES } from '../constants/types';
 import RestaurantCard from './RestaurantCard.vue';
+import { UI_TEXTS } from '../constants/messages';
 const authStore = useAuthStore();
+const text = UI_TEXTS.mypage;
 
 onMounted(async () => {
     if (!authStore.currentUser) return;
@@ -20,19 +23,19 @@ onMounted(async () => {
 
     <div class="mypage-container">
         <div class="mypage-header">
-            <h2>ユーザー情報</h2>
+            <h2>{{ text.userInfoTitle }}</h2>
         </div>
         <div v-if="authStore.currentUser" class="user-info">
-            <p><label>会員ID</label>：{{ authStore.currentUser.userId }}</p>
-            <p><label>名前</label>：{{ authStore.currentUser.userName }}</p>
-            <p><label>メール</label>：{{ authStore.currentUser.userEmail }}</p>
-            <p><label>電話番号</label>：{{ authStore.currentUser.userPhone }}</p>
+            <p><label>{{ text.memberIdLabel }}</label>：{{ authStore.currentUser.userId }}</p>
+            <p><label>{{ text.nameLabel }}</label>：{{ authStore.currentUser.userName }}</p>
+            <p><label>{{ text.emailLabel }}</label>：{{ authStore.currentUser.userEmail }}</p>
+            <p><label>{{ text.phoneLabel }}</label>：{{ authStore.currentUser.userPhone }}</p>
         </div>
     </div>
 
     <div class="favorites-container">
         <div class="favorites-header">
-            <h2>お気に入り一覧</h2>
+            <h2>{{ text.favoritesTitle }}</h2>
         </div>
         <div class="card-grid">
             <RestaurantCard v-for="rest in authStore.favoriteRestaurants" :key="rest.restaurantId" :restaurant="rest" />
@@ -40,8 +43,8 @@ onMounted(async () => {
     </div>
 
     <div class="btn-wrapper">
-        <RouterLink to="/signup" class="back-btn">設定</RouterLink>
-        <RouterLink to="/login" @click.prevent="authStore.logout" class="back-btn">ログアウト</RouterLink>
+        <RouterLink :to="{ name: ROUTE_NAMES.SIGNUP }" class="back-btn">{{ text.settingsButton }}</RouterLink>
+        <RouterLink :to="{ name: ROUTE_NAMES.LOGIN }" @click.prevent="authStore.logout" class="back-btn">{{ text.logoutButton }}</RouterLink>
     </div>
 </template>
 
@@ -110,7 +113,7 @@ onMounted(async () => {
 }
 
 
-@media screen and (min-width: 1024px) {
+@media screen and (min-width: 440px) {
     .card-grid {
         grid-template-columns: repeat(3, 1fr);
     }

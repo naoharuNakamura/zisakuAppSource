@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useRestaurantSearch } from '../composables/useRestaurantSearch'; // パスは環境に合わせて調整してください
+import { SEARCH_OPTIONS } from '../constants/types';
+import { UI_TEXTS } from '../constants/messages';
+
+const text = UI_TEXTS.search;
 
 const {
   searchForm,
@@ -22,26 +26,26 @@ onMounted(() => {
 <template>
   <form @submit.prevent="handleSearchSubmit" class="search-form-container">
     <div class="name-search-form">
-      <label>店舗名検索</label>
-      <input @keydown.enter="handleSearchSubmit" v-model="searchForm.restaurantName" type="text" placeholder="店舗名を入力">
+      <label>{{ text.nameLabel }}</label>
+      <input @keydown.enter="handleSearchSubmit" v-model="searchForm.restaurantName" type="text" :placeholder="text.namePlaceholder">
     </div>
     <div class="detail-search-form">
-      <label class="section-label">詳細検索</label>
+      <label class="section-label">{{ text.detailLabel }}</label>
       <div class="form-layout-rows">
 
         <div class="form-row">
           <div class="form-group">
-            <label>ジャンル</label>
+            <label>{{ text.genreLabel }}</label>
             <select v-model="searchForm.restaurantGenre" class="select-field">
-              <option value="">すべて</option>
+              <option value="">{{ text.allLabel }}</option>
               <option v-for="gen in restGenres" :value="gen">{{ gen }}</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>エリア</label>
+            <label>{{ text.areaLabel }}</label>
             <select v-model="searchForm.restaurantArea" class="select-field">
-              <option value="">すべて</option>
+              <option value="">{{ text.allLabel }}</option>
               <option v-for="area in restAreas" :value="area">{{ area }}</option>
             </select>
           </div>
@@ -49,38 +53,25 @@ onMounted(() => {
 
         <div class="form-row">
           <div class="form-group">
-            <label>評価</label>
+            <label>{{ text.ratingLabel }}</label>
             <div class="radio-button-group">
-              <input :checked="searchForm.restaurantRating === '0~1.5'" type="radio" id="rating-1" name="rating">
-              <label @click.prevent="toggleRating('0~1.5')" for="rating-1">1.5未満</label>
-
-              <input :checked="searchForm.restaurantRating === '1.5~2.5'" type="radio" id="rating-2" name="rating">
-              <label @click.prevent="toggleRating('1.5~2.5')" for="rating-2">1.5~2.5</label>
-
-              <input :checked="searchForm.restaurantRating === '2.5~3.5'" type="radio" id="rating-3" name="rating">
-              <label @click.prevent="toggleRating('2.5~3.5')" for="rating-3">2.5~3.5</label>
-
-              <input :checked="searchForm.restaurantRating === '3.5~4.5'" type="radio" id="rating-4" name="rating">
-              <label @click.prevent="toggleRating('3.5~4.5')" for="rating-4">3.5~4.5</label>
-
-              <input :checked="searchForm.restaurantRating === '4.5~5.0'" type="radio" id="rating-5" name="rating">
-              <label @click.prevent="toggleRating('4.5~5.0')" for="rating-5">4.5以上</label>
+              <template v-for="(rating, index) in SEARCH_OPTIONS.RATINGS" :key="rating">
+                <input :checked="searchForm.restaurantRating === rating" type="radio" :id="`rating-${index}`" name="rating">
+                <label @click.prevent="toggleRating(rating)" :for="`rating-${index}`">
+                  {{ rating === '0~1.5' ? '1.5未満' : rating === '4.5~5.0' ? '4.5以上' : rating }}
+                </label>
+              </template>
             </div>
           </div>
           <div class="form-group">
-            <label>価格帯</label>
+            <label>{{ text.priceLabel }}</label>
             <div class="radio-button-group">
-              <input :checked="searchForm.restaurantPriceRange === '〜¥2,000'" type="radio" id="price-1" name="price">
-              <label @click.prevent="togglePrice('〜¥2,000')" for="price-1">〜¥2,000</label>
-
-              <input :checked="searchForm.restaurantPriceRange === '¥2,000〜¥4,000'" type="radio" id="price-2" name="price">
-              <label @click.prevent="togglePrice('¥2,000〜¥4,000')" for="price-2">¥2,000〜¥4,000</label>
-
-              <input :checked="searchForm.restaurantPriceRange === '¥4,000〜¥6,000'" type="radio" id="price-3" name="price">
-              <label @click.prevent="togglePrice('¥4,000〜¥6,000')" for="price-3">¥4,000〜¥6,000</label>
-
-              <input :checked="searchForm.restaurantPriceRange === '¥6,000〜'" type="radio" id="price-4" name="price">
-              <label @click.prevent="togglePrice('¥6,000〜')" for="price-4">¥6,000〜</label>
+              <template v-for="(price, index) in SEARCH_OPTIONS.PRICE_RANGES" :key="price">
+                <input :checked="searchForm.restaurantPriceRange === price" type="radio" :id="`price-${index}`" name="price">
+                <label @click.prevent="togglePrice(price)" :for="`price-${index}`">
+                  {{ price }}
+                </label>
+              </template>
             </div>
           </div>
         </div>
@@ -88,8 +79,8 @@ onMounted(() => {
       </div>
     </div>
     <div class="btn-wrapper">
-      <button @click="clearQuery" class="clear-btn" type="button">条件をクリア</button>
-      <button class="search-btn" type="submit">この条件で検索する</button>
+      <button @click="clearQuery" class="clear-btn" type="button">{{ text.clearButton }}</button>
+      <button class="search-btn" type="submit">{{ text.submitButton }}</button>
     </div>
   </form>
 </template>

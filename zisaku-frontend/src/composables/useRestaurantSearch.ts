@@ -1,7 +1,8 @@
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { apiService } from '../services/api';
-import { type Restaurant } from '../stores/auth';
+import { type Restaurant, SEARCH_CONFIG, ROUTE_NAMES } from '../constants/types';
+import { ERROR_MESSAGES } from '../constants/messages';
 
 export function useRestaurantSearch() {
   const route = useRoute();
@@ -14,12 +15,12 @@ export function useRestaurantSearch() {
   const isOpen = ref(false); // アコーディオン用
 
   // ページネーション用
-  const pageSize = ref(50);
-  const currentPage = ref(0);
-  const totalPages = ref(0);
-  const totalElements = ref(0);
-  const isFirstPage = ref(true);
-  const isLastPage = ref(true);
+  const pageSize = ref<number>(SEARCH_CONFIG.DEFAULT_PAGE_SIZE);
+  const currentPage = ref<number>(SEARCH_CONFIG.INITIAL_PAGE);
+  const totalPages = ref<number>(0);
+  const totalElements = ref<number>(0);
+  const isFirstPage = ref<boolean>(true);
+  const isLastPage = ref<boolean>(true);
 
   // マスタデータ用
   const restGenres = ref<string[]>([]);
@@ -51,12 +52,12 @@ export function useRestaurantSearch() {
       restPriceRanges.value = prices.data;
       restRatings.value = ratings.data;
     } catch (error) {
-      console.error('マスタデータの取得に失敗しました:', error);
+      console.error(ERROR_MESSAGES.MASTER_DATA_FETCH_FAILED_LOG, error);
     }
   };
 
   // --- 検索実行 (API通信) ---
-  const executeSearch = async (page = 0) => {
+  const executeSearch = async (page: number = SEARCH_CONFIG.INITIAL_PAGE) => {
     isLoading.value = true;
     currentPage.value = page;
 
@@ -70,18 +71,21 @@ export function useRestaurantSearch() {
         isAndSearch: isAndSearch.value,
         page: page,
         size: pageSize.value,
-        sort: (route.query.sort as string) || 'restaurantId,asc',
+        sort: (route.query.sort as string) || SEARCH_CONFIG.DEFAULT_SORT,
       };
 
       const response = await apiService.searchRestaurants(searchParams);
 
-      allResults.value = response.data.content;
-      totalPages.value = response.data.page.totalPages;
-      totalElements.value = response.data.page.totalElements;
-      isFirstPage.value = response.data.page.number === 0;
-      isLastPage.value = response.data.page.number >= response.data.page.totalPages - 1;
+      // 修正：バックエンドのレスポンス構造（response.data）に直接合わせる
+      allResults.value = response.data.list;         // content → list に変更
+      totalPages.value = response.data.pages;        // page.pages → pages に変更
+      totalElements.value = response.data.total;     // page.totalElements → total に変更
+
+      // ページ制御関連も同様に修正
+      isFirstPage.value = response.data.isFirstPage;
+      isLastPage.value = response.data.isLastPage;
     } catch (error) {
-      console.error('検索エラー:', error);
+      console.error(ERROR_MESSAGES.SEARCH_FAILED_LOG, error);
       allResults.value = [];
       totalPages.value = 0;
       totalElements.value = 0;
@@ -100,17 +104,18 @@ export function useRestaurantSearch() {
     );
     // 検索モード（AND/OR）もクエリに含めて遷移する
     activeConditions.isAndSearch = isAndSearch.value ? 'true' : 'false';
-    router.push({ path: '/result', query: activeConditions });
+    router.push({ name: ROUTE_NAMES.RESULT, query: activeConditions });
   };
 
   // --- ソート変更ハンドラ ---
   const handleSortChange = (event: Event) => {
     const target = event.target as HTMLSelectElement;
     router.push({
+      name: ROUTE_NAMES.RESULT,
       query: {
         ...route.query,
         sort: target.value,
-        page: 0,
+        page: SEARCH_CONFIG.INITIAL_PAGE,
       },
     });
   };

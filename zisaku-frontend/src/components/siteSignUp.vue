@@ -3,13 +3,15 @@
 import { ref, computed, onMounted } from "vue";
 import { storeToRefs } from 'pinia';
 import { useRouter } from "vue-router";
-// 必要なインポートを追加
 import { apiService } from "../services/api";
 import { useAuthStore } from "../stores/auth";
+import { ROUTE_NAMES, REGEX, HTTP_STATUS_CODES } from "../constants/types";
+import { ERROR_MESSAGES, VALIDATION_MESSAGES, UI_TEXTS } from "../constants/messages";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { currentUser } = storeToRefs(authStore);
+const text = UI_TEXTS.signup;
 
 // 1. ストアの値を直接 computed で監視することでリアクティブにする
 const isNewSignUp = computed(() => !currentUser.value);
@@ -47,23 +49,23 @@ const handleSubmit = async () => {
 
         if (isNewSignUp.value) {
             await apiService.signup(userData);
-            router.push("/login");
+            router.push({ name: ROUTE_NAMES.LOGIN });
         } else {
             const response = await apiService.updateProfile(userData);
             currentUser.value = response.data;
-            router.push("/mypage");
+            router.push({ name: ROUTE_NAMES.MYPAGE });
         }
     } catch (error: any) {
         // 💡 確実にあらゆる場所からステータスコードを探し出し、数値(Number)に変換する
         const statusCode = error.response?.status || error.status || 0;
 
-        if (Number(statusCode) === 409) {
+        if (Number(statusCode) === HTTP_STATUS_CODES.CONFLICT) {
             // 409（重複エラー）を検知！バナーは出さず、入力欄の下を赤文字にするだけ
-            errors.value.userEmail = "このメールアドレスは既に登録されています";
+            errors.value.userEmail = ERROR_MESSAGES.EMAIL_ALREADY_REGISTERED;
         } else {
             // 本当にサーバーが落ちている時（500）など、想定外の時だけバナーを出す
             console.error("サーバーエラー:", error);
-            alert("処理に失敗しました。再度お試しください。");
+            alert(ERROR_MESSAGES.SERVER_ERROR);
         }
     }
 };
@@ -97,37 +99,34 @@ const validateForm = async () => {
 
     let isValid = true;
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-
     if (isNewSignUp.value && !userPassword.value) {
         // 💡 新規登録で空の場合はエラー
-        errors.value.userPassword = "パスワードを入力してください";
+        errors.value.userPassword = VALIDATION_MESSAGES.PASSWORD_REQUIRED;
         isValid = false;
-    } else if (userPassword.value && !passwordRegex.test(userPassword.value)) {
+    } else if (userPassword.value && !REGEX.PASSWORDREGEX.test(userPassword.value)) {
         // 💡 新規・更新問わず、「入力がある場合」のみ強度チェックを行う
-        errors.value.userPassword = "大文字・小文字・数字・特殊文字をすべて含む8文字以上で入力してください";
+        errors.value.userPassword = VALIDATION_MESSAGES.PASSWORD_WEAK;
         isValid = false;
     }
 
     // ③ パスワード再入力チェック
     // 💡 「パスワードに入力がある場合」のみ一致チェックを行う
     if (userPassword.value && userPassword.value !== reUserPassword.value) {
-        errors.value.reUserPassword = "パスワードが一致しません";
+        errors.value.reUserPassword = VALIDATION_MESSAGES.PASSWORD_MISMATCH;
         isValid = false;
     }
     // ④ お名前（空チェック）
     if (!userName.value.trim()) {
-        errors.value.userName = "お名前を入力してください";
+        errors.value.userName = VALIDATION_MESSAGES.NAME_REQUIRED;
         isValid = false;
     }
 
     // ⑤ メールアドレス：形式チェック
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!userEmail.value) {
-        errors.value.userEmail = "メールアドレスを入力してください";
+        errors.value.userEmail = VALIDATION_MESSAGES.EMAIL_REQUIRED;
         isValid = false;
-    } else if (!emailRegex.test(userEmail.value)) {
-        errors.value.userEmail = "有効なメールアドレスの形式で入力してください";
+    } else if (!REGEX.EMAILREGEX.test(userEmail.value)) {
+        errors.value.userEmail = VALIDATION_MESSAGES.EMAIL_INVALID;
         isValid = false;
     } else {
         // --- ここから重複チェック ---
@@ -138,23 +137,22 @@ const validateForm = async () => {
                 const response = await apiService.getEmailExists(userEmail.value);
 
                 if (response.data === true) {
-                    errors.value.userEmail = "このメールアドレスは既に登録されています";
+                    errors.value.userEmail = ERROR_MESSAGES.EMAIL_ALREADY_REGISTERED;
                     isValid = false;
                 }
             }
         } catch (error) {
-            console.error("重複チェックに失敗しました", error);
+            console.error(ERROR_MESSAGES.DUPLICATE_CHECK_FAILED, error);
             // 500エラーなどが起きた場合はとりあえずここに入る
         }
     }
 
     // ⑥ 電話番号：形式チェック（ハイフン有無両対応）
-    const phoneRegex = /^0\d{1,4}-\d{1,4}-\d{4}$|^0\d{9,10}$/;
     if (!userPhone.value) {
-        errors.value.userPhone = "電話番号を入力してください";
+        errors.value.userPhone = VALIDATION_MESSAGES.PHONE_REQUIRED;
         isValid = false;
-    } else if (!phoneRegex.test(userPhone.value)) {
-        errors.value.userPhone = "有効な電話番号（例: 09012345678）を入力してください";
+    } else if (!REGEX.PHONEREGEX.test(userPhone.value)) {
+        errors.value.userPhone = VALIDATION_MESSAGES.PHONE_INVALID;
         isValid = false;
     }
 
@@ -167,49 +165,49 @@ const validateForm = async () => {
     <div class="signup-container">
         <div class="signup-card">
             <p class="signup-subtitle">
-                {{ isNewSignUp ? "会員情報を入力してください" : "会員情報を修正してください" }}
+                {{ isNewSignUp ? text.newTitle : text.editTitle }}
             </p>
 
             <form class="signup-form" @submit.prevent="handleSubmit">
                 <div class="form-grid">
                     <div class="grid-column">
                         <div class="form-group">
-                            <label for="userName">お名前</label>
-                            <input v-model="userName" id="userName" type="text" placeholder="名前を入力してください"
+                            <label for="userName">{{ text.nameLabel }}</label>
+                            <input v-model="userName" id="userName" type="text" :placeholder="text.namePlaceholder"
                                 class="form-control" :class="{ 'input-error': errors.userName }" required />
                             <span v-if="errors.userName" class="error-text">{{ errors.userName }}</span>
                         </div>
 
                         <div class="form-group">
-                            <label for="userEmail">メールアドレス</label>
-                            <input v-model="userEmail" id="userEmail" type="text" placeholder="メールアドレスを入力してください"
+                            <label for="userEmail">{{ text.emailLabel }}</label>
+                            <input v-model="userEmail" id="userEmail" type="text" :placeholder="text.emailPlaceholder"
                                 class="form-control" :class="{ 'input-error': errors.userEmail }" required />
                             <span v-if="errors.userEmail" class="error-text">{{ errors.userEmail }}</span>
                         </div>
 
                         <div class="form-group">
-                            <label for="userPhone">電話番号</label>
-                            <input v-model="userPhone" id="userPhone" type="text" placeholder="電話番号を入力してください"
+                            <label for="userPhone">{{ text.phoneLabel }}</label>
+                            <input v-model="userPhone" id="userPhone" type="text" :placeholder="text.phonePlaceholder"
                                 class="form-control" :class="{ 'input-error': errors.userPhone }" required />
                             <span v-if="errors.userPhone" class="error-text">{{ errors.userPhone }}</span>
                         </div>
                     </div>
                     <div class="grid-column">
                         <div class="form-group">
-                            <label for="userPassword">パスワード {{ isNewSignUp ? "" : "（変更する場合のみ）" }}</label>
+                            <label for="userPassword">{{ text.passwordLabel }} {{ isNewSignUp ? '' : text.passwordOptional }}</label>
 
                             <input v-model="userPassword" id="userPassword" type="password"
-                                :placeholder="isNewSignUp ? 'パスワードを入力してください' : '変更する場合のみ入力してください'" class="form-control"
+                                :placeholder="isNewSignUp ? text.passwordPlaceholderNew : text.passwordPlaceholderEdit" class="form-control"
                                 :class="{ 'input-error': errors.userPassword }" :required="isNewSignUp" />
 
                             <span v-if="errors.userPassword" class="error-text">{{ errors.userPassword }}</span>
                         </div>
 
                         <div class="form-group">
-                            <label for="reUserPassword">パスワード（再入力）</label>
+                            <label for="reUserPassword">{{ text.rePasswordLabel }}</label>
 
                             <input v-model="reUserPassword" id="reUserPassword" type="password"
-                                :placeholder="isNewSignUp ? 'もう一度パスワードを入力してください' : '変更する場合のみ入力してください'"
+                                :placeholder="isNewSignUp ? text.rePasswordPlaceholderNew : text.rePasswordPlaceholderEdit"
                                 class="form-control" :class="{ 'input-error': errors.reUserPassword }"
                                 :disabled="!userPassword" :required="!!userPassword" />
 
@@ -218,7 +216,7 @@ const validateForm = async () => {
                     </div>
                 </div>
                 <button type="submit" id="signup-btn" class="signup-btn">
-                    {{ isNewSignUp ? "登録" : "更新" }}
+                    {{ isNewSignUp ? text.submitNew : text.submitEdit }}
                 </button>
             </form>
         </div>

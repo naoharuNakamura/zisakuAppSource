@@ -25,8 +25,8 @@ public class UserRestaurantController {
 
     @PostMapping("/toggle")
     public ResponseEntity<?> toggleFavorite(@RequestBody Map<String, Object> payload) {
-        Long userId = ((Number) payload.get("userId")).longValue();
-        Long restaurantId = ((Number) payload.get("restaurantId")).longValue();
+        int userId = ((Number) payload.get("userId")).intValue();
+        int restaurantId = ((Number) payload.get("restaurantId")).intValue();
 
         var response = userRestaurantService.toggleFavorite(userId, restaurantId);
         return ResponseEntity.ok(response);
@@ -34,24 +34,26 @@ public class UserRestaurantController {
 
     // ★ ("userId") を明記
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Long>> getUserFavorites(@PathVariable("userId") Long userId) {
-        List<Long> restaurantIds = userRestaurantService.getUserFavorites(userId);
+    public ResponseEntity<List<Integer>> getUserFavorites(@PathVariable("userId") int userId) {
+        List<Integer> restaurantIds = userRestaurantService.getUserFavorites(userId);
         return ResponseEntity.ok(restaurantIds);
     }
 
     // ★ ("userId") を明記
     @GetMapping("/user/{userId}/details")
-    public ResponseEntity<List<Restaurant>> getFavoriteDetails(@PathVariable("userId") Long userId) {
+    public ResponseEntity<List<Restaurant>> getFavoriteDetails(@PathVariable("userId") int userId) {
         List<Restaurant> result = userRestaurantService.getFavoriteDetails(userId);
         return ResponseEntity.ok(result);
     }
 
-    // ★ ("restaurantId") を明記
-    @PostMapping("/result-detail/{restaurantId}")
+    // ★ フロントの types.ts の EDIT_MEMO のURLと完全に一致させる
+    @PostMapping("/user/{userId}/restaurant/{restaurantId}")
     public ResponseEntity<?> editMemoRestaurant(
-            @PathVariable("restaurantId") long restaurantId, 
+            @PathVariable("userId") int userId,
+            @PathVariable("restaurantId") int restaurantId,
             @RequestBody Map<String, Object> payload) {
-        Long userId = ((Number) payload.get("userId")).longValue();
+
+        // userId は URL（@PathVariable）から取得できるため、payload から取り出す処理は削除
         String memo = (String) payload.get("memo");
 
         UserRestaurant updated = userRestaurantService.editMemoRestaurant(userId, restaurantId, memo);
@@ -62,9 +64,9 @@ public class UserRestaurantController {
     // ★ 各 @PathVariable にも名前を明記
     @GetMapping("/user/{userId}/restaurant/{restaurantId}")
     public ResponseEntity<?> getMemoRestaurant(
-            @PathVariable("userId") Long userId, 
-            @PathVariable("restaurantId") Long restaurantId) {
-            
+            @PathVariable("userId") int userId,
+            @PathVariable("restaurantId") int restaurantId) {
+
         var opt = userRestaurantService.getUserRestaurant(userId, restaurantId);
         if (opt.isPresent()) {
             return ResponseEntity.ok(Map.of("memo", opt.get().getUserMemo()));

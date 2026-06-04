@@ -2,16 +2,15 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth';
-import { convertTypeAcquisitionFromJson } from 'typescript';
+import { ROUTES, ROUTE_NAMES } from '../constants/types';
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-// ① 現在のURL（パス）を見て、ログイン・新規登録画面かどうかを判定
-// ログイン・登録画面のときは、ヘッダーを大きくするためのフラグ
+// ① 現在のルート名を見て、ログイン・新規登録画面かどうかを判定
 const isAuthPage = computed(() => {
-    return route.path === '/login' || route.path === '/signup'
+    return route.name === ROUTE_NAMES.LOGIN || route.name === ROUTE_NAMES.SIGNUP
 })
 
 // 会員情報を右上に表示するかどうかの判定（ログイン・登録画面以外、かつログイン中のみ表示）
@@ -27,10 +26,10 @@ const memberName = computed(() => {
 <template>
 
     <header class="app-header" :class="{ 'is-large': isAuthPage }">
-        <RouterLink to="/search" class="logo"><h1>My Gourmet Map</h1></RouterLink> 
-        <RouterLink to="/mypage" v-if="showUserInfo" class="user-info">
+        <RouterLink :to="{ name: ROUTE_NAMES.SEARCH }" class="logo"><h1>My Gourmet Map</h1></RouterLink> 
+        <RouterLink :to="{ name: ROUTE_NAMES.MYPAGE }" v-if="showUserInfo" class="user-info">
             <span class="user-icon">👤</span>
-            <span class="user_name">{{ memberName }}</span>
+            <span class="user_name">{{memberName}}</span>
         </RouterLink>
     </header>
 
@@ -102,7 +101,7 @@ const memberName = computed(() => {
 }
 
 
-@media screen and (max-width: 640px) {
+@media screen and (max-width: 440px) {
     .app-header {
         flex-wrap: wrap;
         justify-content: center;

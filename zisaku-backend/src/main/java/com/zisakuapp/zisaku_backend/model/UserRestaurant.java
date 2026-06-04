@@ -1,34 +1,26 @@
 package com.zisakuapp.zisaku_backend.model;
 
-import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
-@Entity
-@Table(name = "t_user_restaurant")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserRestaurant {
 
-    @EmbeddedId
     private UserRestaurantId id;
-
-    @Column(name = "is_favorite")
     private Boolean isFavorite;
-
-    @Column(name = "user_memo")
     private String userMemo;
 
-    @Embeddable
     @Data
     public static class UserRestaurantId implements Serializable {
-        @Column(name = "user_id")
-        private Long userId;
-
-        @Column(name = "restaurant_id")
-        private Long restaurantId;
+        private int userId;
+        private int restaurantId;
 
         public UserRestaurantId() {}
-        public UserRestaurantId(Long userId, Long restaurantId) {
+        public UserRestaurantId(int userId, int restaurantId) {
             this.userId = userId;
             this.restaurantId = restaurantId;
         }

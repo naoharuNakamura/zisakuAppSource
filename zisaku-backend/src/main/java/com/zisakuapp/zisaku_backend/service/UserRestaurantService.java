@@ -2,12 +2,13 @@ package com.zisakuapp.zisaku_backend.service;
 
 import com.zisakuapp.zisaku_backend.model.Restaurant;
 import com.zisakuapp.zisaku_backend.model.UserRestaurant;
-import com.zisakuapp.zisaku_backend.repository.RestaurantRepository;
-import com.zisakuapp.zisaku_backend.repository.UserRestaurantRepository;
 import com.zisakuapp.zisaku_backend.dto.UserRestaurantResponse;
+import com.zisakuapp.zisaku_backend.mapper.RestaurantMapper;
+import com.zisakuapp.zisaku_backend.mapper.UserRestaurantMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,39 +17,63 @@ import java.util.Optional;
 public class UserRestaurantService {
 
     @Autowired
-    private UserRestaurantRepository userRestaurantRepository;
+    private UserRestaurantMapper userRestaurantMapper;
 
     @Autowired
-    private RestaurantRepository restaurantRepository;
+    private RestaurantMapper restaurantMapper;
 
     public List<UserRestaurant> getAllUserRestaurants() {
-        return userRestaurantRepository.findAll();
+        return userRestaurantMapper.findAll();
     }
 
-    public UserRestaurantResponse toggleFavorite(Long userId, Long restaurantId) {
-        Optional<UserRestaurant> existing = userRestaurantRepository.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
+    @Transactional
+    public UserRestaurantResponse toggleFavorite(int userId, int restaurantId) {
+        Optional<UserRestaurant> existing = userRestaurantMapper.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
 
         if (existing.isPresent()) {
-            userRestaurantRepository.deleteByIdUserIdAndIdRestaurantId(userId, restaurantId);
-            return new UserRestaurantResponse("removed");
+            UserRestaurant userRestaurant = existing.get();
+            boolean isCurrentlyFavorite = Boolean.TRUE.equals(userRestaurant.getIsFavorite());
+
+            if (isCurrentlyFavorite) {
+                // お気に入り状態だったので解除する
+                userRestaurant.setIsFavorite(false);
+
+                // メモも空（またはnull）なら、不要なデータなのでレコードごと削除
+                if (userRestaurant.getUserMemo() == null || userRestaurant.getUserMemo().trim().isEmpty()) {
+                    userRestaurantMapper.deleteByIdUserIdAndIdRestaurantId(userId, restaurantId);
+                } else {
+                    // メモが残っている場合は更新して残す
+                    userRestaurantMapper.upsert(userRestaurant);
+                }
+                return new UserRestaurantResponse("removed");
+
+            } else {
+                // メモだけ存在していてお気に入りではなかった場合 -> お気に入りONにする
+                userRestaurant.setIsFavorite(true);
+                userRestaurantMapper.upsert(userRestaurant);
+                return new UserRestaurantResponse("added");
+            }
+
         } else {
+            // 全く新しいデータとしてお気に入り登録
             UserRestaurant userRestaurant = new UserRestaurant();
             UserRestaurant.UserRestaurantId id = new UserRestaurant.UserRestaurantId(userId, restaurantId);
             userRestaurant.setId(id);
             userRestaurant.setIsFavorite(true);
 
-            userRestaurantRepository.save(userRestaurant);
+            userRestaurantMapper.upsert(userRestaurant);
             return new UserRestaurantResponse("added");
         }
     }
 
-    public UserRestaurant getMemoRestaurant(Long userId, Long restaurantId) {
-        Optional<UserRestaurant> existing = userRestaurantRepository.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
+    @Transactional
+    public UserRestaurant getMemoRestaurant(int userId, int restaurantId) {
+        Optional<UserRestaurant> existing = userRestaurantMapper.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
         return existing.orElse(null);
     }
 
-    public UserRestaurant editMemoRestaurant(Long userId, Long restaurantId, String memo){
-        Optional<UserRestaurant> existing = userRestaurantRepository.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
+    public UserRestaurant editMemoRestaurant(int userId, int restaurantId, String memo) {
+        Optional<UserRestaurant> existing = userRestaurantMapper.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
 
         UserRestaurant userRestaurant;
         if (existing.isPresent()) {
@@ -62,21 +87,22 @@ public class UserRestaurantService {
             userRestaurant.setIsFavorite(false);
         }
 
-        return userRestaurantRepository.save(userRestaurant);
+        userRestaurantMapper.upsert(userRestaurant);
+        return userRestaurant;
     }
 
-    public List<Long> getUserFavorites(Long userId) {
-        List<UserRestaurant> favorites = userRestaurantRepository.findByIdUserId(userId);
+    public List<Integer> getUserFavorites(int userId) {
+        List<UserRestaurant> favorites = userRestaurantMapper.findByIdUserId(userId);
         return favorites.stream()
                 .filter(fav -> Boolean.TRUE.equals(fav.getIsFavorite()))
                 .map(fav -> fav.getId().getRestaurantId())
                 .toList();
     }
-    
-    public List<Restaurant> getFavoriteDetails(Long userId) {
-        List<UserRestaurant> favorites = userRestaurantRepository.findByIdUserId(userId);
 
-        List<Long> ids = favorites.stream()
+    public List<Restaurant> getFavoriteDetails(int userId) {
+        List<UserRestaurant> favorites = userRestaurantMapper.findByIdUserId(userId);
+
+        List<Integer> ids = favorites.stream()
                 .filter(r -> Boolean.TRUE.equals(r.getIsFavorite()))
                 .map(r -> r.getId().getRestaurantId())
                 .toList();
@@ -85,10 +111,10 @@ public class UserRestaurantService {
             return List.of();
         }
 
-        return restaurantRepository.findAllById(ids);
+        return restaurantMapper.findAllByIds(ids);
     }
 
-    public Optional<UserRestaurant> getUserRestaurant(Long userId, Long restaurantId) {
-        return userRestaurantRepository.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
+    public Optional<UserRestaurant> getUserRestaurant(int userId, int restaurantId) {
+        return userRestaurantMapper.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
     }
 }

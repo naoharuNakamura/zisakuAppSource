@@ -1,132 +1,137 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router';
-import { ref, onMounted, computed } from 'vue';
-import { useAuthStore, type Restaurant } from '../stores/auth';
-import { apiService } from '../services/api'
+import { useRestaurantDetail } from '../composables/useRestaurantDetail';
+import { UI_TEXTS } from '../constants/messages';
 
-const route = useRoute();
-const router = useRouter();
-const restaurant = ref<Restaurant | null>(null);
-const authStore = useAuthStore()
-const restaurantMemo = ref(''); // メモの内容を保持するためのref
-const currentUserId = computed(() => authStore.currentUser?.userId); // 現在のユーザーIDを取得
-const isEditing = ref(false);
-const _prevMemo = ref('');
+const text = UI_TEXTS.detail;
 
-onMounted(async () => {
-
-  // パラメータ名が id だった場合は以下のようにする
-  const restaurantId = Number(route.params.restaurantId);
-  console.log('取得したparams:', restaurantId); // デバッグ用ログ
-
-  try {
-    const response = await apiService.getRestaurantDetail(restaurantId);
-    // ここで response.data を入れる（型定義に合わせて調整）
-    restaurant.value = response.data;
-
-    if (!currentUserId.value) {
-      console.error('ユーザーがログインしていません');
-      return;
-    }
-
-    const memoResponse = await apiService.getMemoRestaurant({ userId: currentUserId.value, restaurantId });
-
-    restaurantMemo.value = memoResponse.data.memo || ''; // メモが存在しない場合は空文字をセット
-
-  } catch (error) {
-    console.error('店舗情報の取得に失敗:', error);
-  }
-});
-
-const startEdit = () => {
-  _prevMemo.value = restaurantMemo.value;
-  isEditing.value = true;
-}
-
-const cancelEdit = () => {
-  restaurantMemo.value = _prevMemo.value;
-  isEditing.value = false;
-}
-
-const saveMemo = async () => {
-  if (!currentUserId.value) {
-    console.error('ユーザーがログインしていません');
-    return;
-  }
-  if (!restaurant.value) {
-    console.error('店舗情報が未取得です');
-    return;
-  }
-
-  try {
-    await apiService.editMemoRestaurant({ userId: currentUserId.value, restaurantId: restaurant.value.restaurantId, memo: restaurantMemo.value });
-    isEditing.value = false;
-    console.log('メモが保存されました');
-  } catch (error) {
-    console.error('メモの保存に失敗:', error);
-  }
-}
-
+const {
+  restaurant,
+  restaurantMemo,
+  isEditing,
+  isLoading,
+  isError,
+  errorMessage,
+  saveError,
+  isFavorite,
+  startEdit,
+  cancelEdit,
+  saveMemo,
+  toggleFavorite,
+  goBack,
+} = useRestaurantDetail();
 </script>
 
 <template>
   <div class="detail-container">
-    <a @click="router.back()" class="back-btn">←戻る</a>
-    <div class="detail-ribbon">
-      <h2>{{ restaurant?.restaurantName }}</h2>
-      <div v-if="restaurant" class="favorite-wrapper">
-        <input type="checkbox" :id="'fav-' + restaurant.restaurantId"
-          :checked="authStore.isFavorite(restaurant.restaurantId)"
-          @click.stop="authStore.toggleFavorite(restaurant.restaurantId)" class="favorite-checkbox" />
-        <label :for="'fav-' + restaurant?.restaurantId" class="heart-icon"></label>
-      </div>
+    <div v-if="isLoading" class="simple-loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">{{ text.loadingText }}</p>
     </div>
-    <div class="detail-card">
 
-      <div class="image-wrapper">
-        <img :src="restaurant?.restaurantImg" :alt="restaurant?.restaurantName" />
+    <div v-else-if="isError" class="error-banner">
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="back-link-btn" @click="goBack">{{ text.backToListButton }}</button>
+    </div>
+
+    <div v-else>
+      <button type="button" class="back-link-btn" @click="goBack">{{ text.backButton }}</button>
+      <div class="detail-ribbon">
+        <h2>{{ restaurant?.restaurantName }}</h2>
+        <div v-if="restaurant" class="favorite-wrapper">
+          <input
+            type="checkbox"
+            :id="'fav-' + restaurant.restaurantId"
+            :checked="isFavorite"
+            @click.stop="toggleFavorite"
+            class="favorite-checkbox"
+          />
+          <label :for="'fav-' + restaurant.restaurantId" class="heart-icon"></label>
+        </div>
       </div>
-      <div class="detail-grid">
-        <div class="grid-column">
-          <p><span class="info-label">評価</span><span class="info-value">{{ restaurant?.restaurantRating }}</span></p>
-          <p><span class="info-label">ジャンル</span><span class="info-value">{{ restaurant?.restaurantGenre }}</span></p>
-          <p><span class="info-label">価格帯</span><span class="info-value">{{ restaurant?.restaurantPriceRange }}</span>
-          </p>
+
+      <div class="detail-card">
+        <div class="image-wrapper">
+          <img :src="restaurant?.restaurantImg" :alt="restaurant?.restaurantName" />
         </div>
 
-        <div class="grid-column">
-          <p><span class="info-label">営業時間</span><span class="info-value">{{ restaurant?.restaurantOpenHour }}-{{
-            restaurant?.restaurantCloseHour }}</span></p>
-          <p><span class="info-label">休業日</span><span class="info-value">{{ restaurant?.restaurantClosedDays }}</span>
-          </p>
-          <p><span class="info-label">電話番号</span><span class="info-value">{{ restaurant?.restaurantPhone }}</span></p>
-        </div>
+        <div class="detail-grid">
+          <div class="grid-column">
+            <p>
+              <span class="info-label">評価</span>
+              <span class="info-value">{{ restaurant?.restaurantRating }}</span>
+            </p>
+            <p>
+              <span class="info-label">ジャンル</span>
+              <span class="info-value">{{ restaurant?.restaurantGenre }}</span>
+            </p>
+            <p>
+              <span class="info-label">価格帯</span>
+              <span class="info-value">{{ restaurant?.restaurantPriceRange }}</span>
+            </p>
+          </div>
 
-        <div class="grid-column">
-          <p><span class="info-label">住所</span><span class="info-value">{{ restaurant?.restaurantAddress }}</span></p>
-          <p v-if="restaurant?.restaurantUrl">
-            <span class="info-label">公式サイト</span>
-            <span class="info-value">
-              <a :href="restaurant.restaurantUrl" target="_blank" rel="noopener noreferrer" class="official-link">
-                {{ restaurant.restaurantUrl }}
-              </a>
-            </span>
-          </p>
-        </div>
-        <div class="memo-column">
-          <div class="memo-area">
-            <div class="memo-header">
-              <span class="memo-label">メモ</span>
-              <div class="memo-actions">
-                <button v-if="!isEditing" @click="startEdit" class="memo-button">編集</button>
-                <button v-else @click="saveMemo" class="memo-button">保存</button>
-                <button v-if="isEditing" @click="cancelEdit" class="memo-button secondary">キャンセル</button>
+          <div class="grid-column">
+            <p>
+              <span class="info-label">営業時間</span>
+              <span class="info-value">
+                {{ restaurant?.restaurantOpenHour }} - {{ restaurant?.restaurantCloseHour }}
+              </span>
+            </p>
+            <p>
+              <span class="info-label">休業日</span>
+              <span class="info-value">{{ restaurant?.restaurantClosedDays }}</span>
+            </p>
+            <p>
+              <span class="info-label">電話番号</span>
+              <span class="info-value">{{ restaurant?.restaurantPhone }}</span>
+            </p>
+          </div>
+
+          <div class="grid-column">
+            <p>
+              <span class="info-label">住所</span>
+              <span class="info-value">{{ restaurant?.restaurantAddress }}</span>
+            </p>
+            <p v-if="restaurant?.restaurantUrl">
+              <span class="info-label">公式サイト</span>
+              <span class="info-value">
+                <a
+                  :href="restaurant.restaurantUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="official-link"
+                >
+                  {{ restaurant.restaurantUrl }}
+                </a>
+              </span>
+            </p>
+          </div>
+
+          <div class="memo-column">
+            <div class="memo-area">
+              <div class="memo-header">
+                <span class="memo-label">{{ text.memoLabel }}</span>
+                <div class="memo-actions">
+                  <button v-if="!isEditing" @click="startEdit" class="memo-button">{{ text.editButton }}</button>
+                  <button v-else @click="saveMemo" class="memo-button">{{ text.saveButton }}</button>
+                  <button v-if="isEditing" @click="cancelEdit" class="memo-button secondary">{{ text.cancelButton }}</button>
+                </div>
               </div>
-            </div>
-            <div class="memo-body">
-              <span v-if="!isEditing" class="memo-text">{{ restaurantMemo || 'まだメモはありません。編集ボタンで追加してください。' }}</span>
-              <textarea v-else v-model="restaurantMemo" class="memo-textarea" rows="4"
-                placeholder="ここにメモを入力"></textarea>
+
+              <div v-if="saveError" class="error-text save-error">{{ saveError }}</div>
+
+              <div class="memo-body">
+                <span v-if="!isEditing" class="memo-text">
+                  {{ restaurantMemo || text.emptyMemo }}
+                </span>
+                <textarea
+                  v-else
+                  v-model="restaurantMemo"
+                  class="memo-textarea"
+                  rows="4"
+                  :placeholder="text.memoPlaceholder"
+                ></textarea>
+              </div>
             </div>
           </div>
         </div>
@@ -226,7 +231,7 @@ const saveMemo = async () => {
 }
 
 /* 💡 PCでの見栄えを最適化 */
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 440px) {
   .detail-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
@@ -390,22 +395,11 @@ const saveMemo = async () => {
   text-decoration: underline;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 440px) {
   .detail-ribbon {
     align-items: flex-start;
     gap: 12px;
   }
-
-  .detail-grid {
-    padding: 24px;
-  }
-
-  .memo-header {
-    align-items: flex-start;
-  }
-}
-
-@media screen and (max-width: 440px) {
   .detail-container {
     max-width: 100%;
     padding: 0 16px;
@@ -414,5 +408,10 @@ const saveMemo = async () => {
   .detail-grid {
     padding: 16px;
   }
+
+  .memo-header {
+    align-items: flex-start;
+  }
 }
+
 </style>

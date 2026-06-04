@@ -3,9 +3,12 @@ import { onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import RestaurantCard from './RestaurantCard.vue';
 import { useRestaurantSearch } from '../composables/useRestaurantSearch';
+import { ROUTE_NAMES, SEARCH_CONFIG, SEARCH_OPTIONS } from '../constants/types';
+import { UI_TEXTS } from '../constants/messages';
 
 const route = useRoute();
 const restaurantSearch = useRestaurantSearch();
+const text = UI_TEXTS.result;
 
 // コンポーザブルから必要な状態や関数をすべて展開（テンプレートの記述をシンプルにするため）
 const {
@@ -35,13 +38,13 @@ const {
 } = restaurantSearch;
 
 onMounted(() => {
-  executeSearch(0);
+  executeSearch(SEARCH_CONFIG.INITIAL_PAGE);
   fetchMasterData();
 });
 
 // 💡 修正ポイント①: isAndSearch も監視対象に含め、検索モード切替時にも自動で再検索を走らせる
 watch([() => route.query, isAndSearch], () => {
-  executeSearch(0);
+  executeSearch(SEARCH_CONFIG.INITIAL_PAGE);
 }, { deep: true });
 
 // 💡 修正ポイント②: 「この条件で再検索」ボタンが押された時の専用処理
@@ -68,14 +71,13 @@ const onSearchSubmit = () => {
   // もし前回と「完全に同じ条件」でURLが変わらなかった場合、
   // watchが動かないため、ここで手動で強制的に再検索を走らせる
   if (currentQueryStr === JSON.stringify(nextQuery)) {
-    executeSearch(0);
+    executeSearch(SEARCH_CONFIG.INITIAL_PAGE);
   }
 };
 
-// 💡 修正ポイント③: 検索モード切替時に即座に再検索を実行
 const onToggleSearchMode = () => {
   toggleSearchMode();
-  executeSearch(0);
+  executeSearch(SEARCH_CONFIG.INITIAL_PAGE);
 };
 </script>
 
@@ -84,57 +86,54 @@ const onToggleSearchMode = () => {
 
     <div v-if="isLoading" class="simple-loading-container">
       <div class="loading-spinner"></div>
-      <p class="loading-text">読み込み中...</p>
+      <p class="loading-text">{{ text.loadingText }}</p>
     </div>
 
     <div v-else>
       <div class="result-header">
         <div class="header-left">
-          <h2>検索結果 ({{ totalElements }}件)</h2>
+          <h2>{{ text.headerText }} ({{ totalElements }}件)</h2>
         </div>
         <div class="actions-wrapper">
           <div class="size-selector">
             <label for="page-size">表示件数：</label>
-            <select id="page-size" v-model="pageSize" @change="executeSearch(0)">
-              <option :value="30">30件ずつ</option>
-              <option :value="50">50件ずつ</option>
-              <option :value="100">100件ずつ</option>
-              <option :value="99999">全部を表示</option>
+            <select id="page-size" v-model="pageSize" @change="executeSearch(SEARCH_CONFIG.INITIAL_PAGE)">
+              <option v-for="size in SEARCH_CONFIG.PAGE_SIZE_OPTIONS" :key="size" :value="size">
+                {{ size === SEARCH_CONFIG.SHOW_ALL_SIZE ? text.showAllText : `${size}件ずつ` }}
+              </option>
             </select>
           </div>
-          <RouterLink to="/search" class="back-btn">検索画面へ戻る</RouterLink>
+          <RouterLink :to="{ name: ROUTE_NAMES.SEARCH }" class="back-btn">{{ text.backToSearch }}</RouterLink>
         </div>
       </div>
-
 
       <div class="sort-wrapper">
         <div class="accordion-container">
           <button @click="toggleAccordion()" type="button" class="accordion-btn" :aria-expanded="isOpen"
             aria-controls="filter-accordion-content">
-            条件を絞る
+            {{ text.refineButton }}
           </button>
-
           <div v-show="isOpen" id="filter-accordion-content" class="accordion-content-box">
             <form @submit.prevent="handleSearchSubmit" class="inner-search-form">
 
               <div class="form-group-block">
-                <label for="filter-res-name">店舗名</label>
-                <input id="filter-res-name" v-model="searchForm.restaurantName" type="text" placeholder="店舗名を追加・変更">
+                  <label for="filter-res-name">{{ text.storeNameLabel }}</label>
+                  <input id="filter-res-name" v-model="searchForm.restaurantName" type="text" :placeholder="text.storeNamePlaceholder">
               </div>
 
               <div class="form-row-line">
                 <div class="form-group-block">
-                  <label for="filter-genre">ジャンル</label>
+                  <label for="filter-genre">{{ UI_TEXTS.search.genreLabel }}</label>
                   <select id="filter-genre" v-model="searchForm.restaurantGenre">
-                    <option value="">すべて</option>
+                    <option value="">{{ UI_TEXTS.search.allLabel }}</option>
                     <option v-for="gen in restGenres" :value="gen" :key="gen">{{ gen }}</option>
                   </select>
                 </div>
 
                 <div class="form-group-block">
-                  <label for="filter-area">エリア</label>
+                  <label for="filter-area">{{ UI_TEXTS.search.areaLabel }}</label>
                   <select id="filter-area" v-model="searchForm.restaurantArea">
-                    <option value="">すべて</option>
+                    <option value="">{{ UI_TEXTS.search.allLabel }}</option>
                     <option v-for="area in restAreas" :value="area" :key="area">{{ area }}</option>
                   </select>
                 </div>
@@ -143,7 +142,7 @@ const onToggleSearchMode = () => {
               <div class="form-group-block">
                 <label>評価</label>
                 <div class="mini-kpi-group">
-                  <button v-for="rate in ['0~1.5', '1.5~2.5', '2.5~3.5', '3.5~4.5', '4.5~5.0']" :key="rate"
+                  <button v-for="rate in SEARCH_OPTIONS.RATINGS" :key="rate"
                     type="button" :class="['mini-btn', searchForm.restaurantRating === rate ? 'active' : '']"
                     :aria-pressed="searchForm.restaurantRating === rate" @click="toggleRating(rate)">
                     {{ rate }}
@@ -154,7 +153,7 @@ const onToggleSearchMode = () => {
               <div class="form-group-block">
                 <label>価格帯</label>
                 <div class="mini-kpi-group">
-                  <button v-for="price in ['〜¥2,000', '¥2,000〜¥4,000', '¥4,000〜¥6,000', '¥6,000〜']" :key="price"
+                  <button v-for="price in SEARCH_OPTIONS.PRICE_RANGES" :key="price"
                     type="button" :class="['mini-btn', searchForm.restaurantPriceRange === price ? 'active' : '']"
                     :aria-pressed="searchForm.restaurantPriceRange === price" @click="togglePrice(price)">
                     {{ price }}
@@ -165,33 +164,33 @@ const onToggleSearchMode = () => {
               <div class="form-action-line">
                 <button @click="onToggleSearchMode" type="button"
                   :class="['toggle-search-btn', isAndSearch ? 'and-mode' : 'or-mode']">
-                  検索モード: {{ isAndSearch ? 'すべての条件に一致' : 'いずれかの条件に一致' }}
+                  {{ text.modeLabel }} {{ isAndSearch ? text.modeAnd : text.modeOr }}
                 </button>
 
                 <div class="submit-btns">
-                  <button @click="clearQuery" class="inner-clear-btn" type="button">クリア</button>
-                  <button class="inner-submit-btn" type="submit" @click="onSearchSubmit">この条件で再検索</button>
+                  <button @click="clearQuery" class="inner-clear-btn" type="button">{{ text.clearText }}</button>
+                  <button class="inner-submit-btn" type="submit" @click="onSearchSubmit">{{ text.infoSearchButton }}</button>
                 </div>
               </div>
 
             </form>
           </div>
         </div>
-        <div v-if="totalPages > 1 && pageSize !== 99999" class="pagination-container">
+        <div v-if="totalPages > 1 && pageSize !== SEARCH_CONFIG.SHOW_ALL_SIZE" class="pagination-container">
           <button class="back-btn" :disabled="isFirstPage" @click="executeSearch(currentPage - 1)">
-            前へ
+            {{ text.prevPage }}
           </button>
           <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }} ページ</span>
           <button class="back-btn" :disabled="isLastPage" @click="executeSearch(currentPage + 1)">
-            次へ
+            {{ text.nextPage }}
           </button>
         </div>
         <div v-if="allResults.length" class="sort-selector">
-          <label for="sort-select">並び替え：</label>
+          <label for="sort-select">{{ text.sortLabel }}</label>
           <select id="sort-select" :value="route.query.sort || ''" @change="handleSortChange">
-            <option value="">標準</option>
-            <option value="restaurantRating,desc">評価の高い順</option>
-            <option value="restaurantRating,asc">評価の低い順</option>
+            <option v-for="option in SEARCH_CONFIG.SORT_OPTIONS" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
           </select>
         </div>
       </div>
@@ -202,7 +201,7 @@ const onToggleSearchMode = () => {
       </div>
     </div>
     <div v-if="noResult" class="no-result-message">
-      <h3>ご期待に沿えるお店が見つかりませんでした</h3>
+      <h3>{{ text.noResultText }}</h3>
     </div>
   </div>
 </template>
@@ -287,10 +286,12 @@ const onToggleSearchMode = () => {
 .accordion-content-box {
   position: absolute;
   top: calc(100% + 8px);
-  left: 50%;
+  left: 260px;
   transform: translateX(-50%);
   z-index: 150;
   /* 確実に最前面に出す */
+  padding: 24px;
+  background-color: var(--color-bg-main);
 
   /* 💡 スマホ等で画面外にはみ出さないようにしつつ、PCでは適切な幅を確保 */
   width: min(calc(100vw - 48px), 540px);
@@ -544,7 +545,7 @@ const onToggleSearchMode = () => {
   gap: 24px;
 }
 
-@media screen and (min-width: 440px) {
+@media screen and (max-width: 440px) {
   .result-header{
     flex-direction: column;
   }
@@ -559,9 +560,14 @@ const onToggleSearchMode = () => {
   }
 }
 
-@media screen and (min-width: 1024px) {
+@media screen and (min-width: 440px) {
   .card-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .accordion-content-box {
+    top: calc(100% + 12px);
+    left: 260px;
   }
 }
 
