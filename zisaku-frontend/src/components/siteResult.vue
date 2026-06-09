@@ -176,7 +176,7 @@ const onToggleSearchMode = () => {
           <button class="back-btn" :disabled="isFirstPage" @click="executeSearch(currentPage - 1)">
             {{ text.prevPage }}
           </button>
-          <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }} ページ</span>
+          <span class="page-info">{{ currentPage }} / {{ totalPages }} ページ</span>
           <button class="back-btn" :disabled="isLastPage" @click="executeSearch(currentPage + 1)">
             {{ text.nextPage }}
           </button>

@@ -58,8 +58,23 @@ export function useRestaurantSearch() {
 
   // --- 検索実行 (API通信) ---
   const executeSearch = async (page: number = SEARCH_CONFIG.INITIAL_PAGE) => {
+// 💡 修正：ページ番号の境界チェックを 1-indexed (1始まり) に合わせる
+    let targetPage = page;
+    
+    // 0以下が渡された場合は最低ページの1にする
+    if (targetPage < 1) {
+      targetPage = 1;
+    }
+
+    if (totalPages.value > 0) {
+      // 最大ページを超えないように制限
+      if (targetPage > totalPages.value) {
+        targetPage = totalPages.value;
+      }
+    }
+
     isLoading.value = true;
-    currentPage.value = page;
+    currentPage.value = targetPage; // 修正したページ番号を状態にセット
 
     try {
       const searchParams = {
@@ -69,7 +84,7 @@ export function useRestaurantSearch() {
         restaurantRating: (route.query.restaurantRating as string) || '',
         restaurantPriceRange: (route.query.restaurantPriceRange as string) || '',
         isAndSearch: isAndSearch.value,
-        page: page,
+        page: targetPage,
         size: pageSize.value,
         sort: (route.query.sort as string) || SEARCH_CONFIG.DEFAULT_SORT,
       };
@@ -153,10 +168,11 @@ export function useRestaurantSearch() {
   // --- 算出プロパティ ---
   const noResult = computed(() => !isLoading.value && totalElements.value === 0);
 
-  // クエリの変更を監視してフォームに同期（ブラウザの「戻る」対策）
+  // クエリの変更を監視してフォームに同期し、検索を自動実行する
   watch(
     () => route.query,
-    (newQuery) => {
+    (newQuery, oldQuery) => {
+      // 1. フォームへの同期
       searchForm.value = {
         restaurantName: (newQuery.restaurantName as string) || '',
         restaurantGenre: (newQuery.restaurantGenre as string) || '',
@@ -164,8 +180,15 @@ export function useRestaurantSearch() {
         restaurantRating: (newQuery.restaurantRating as string) || '',
         restaurantPriceRange: (newQuery.restaurantPriceRange as string) || '',
       };
-      // URLクエリにisAndSearchがあれば同期する（ブラウザ操作での一貫性確保）
       isAndSearch.value = (newQuery.isAndSearch as string) === 'true';
+
+      // 2. 検索実行（クエリが変化した時のみ実行）
+      // JSON.stringifyでクエリの変化を検知します
+      if (JSON.stringify(newQuery) !== JSON.stringify(oldQuery)) {
+        // ページ番号をクエリから取得（なければ初期値 0）
+        const page = parseInt(newQuery.page as string) || SEARCH_CONFIG.INITIAL_PAGE;
+        executeSearch(page);
+      }
     },
     { deep: true }
   );
