@@ -200,19 +200,5 @@ public class RestaurantService {
                 System.err.println("レーティングの数値変換エラー: " + request.getRestaurantRating());
             }
         }
-
-        // 予算（文字列）の数字抽出パース
-        if (request.getRestaurantPriceRange() != null && !request.getRestaurantPriceRange().isEmpty()) {
-            String cleaned = request.getRestaurantPriceRange().replaceAll("[^0-9]+", " ").trim();
-            if (!cleaned.isEmpty()) {
-                String[] numbers = cleaned.split(" ");
-                if (numbers.length == 2) {
-                    request.setPriceNum1(numbers[0]);
-                    request.setPriceNum2(numbers[1]);
-                } else if (numbers.length == 1) {
-                    request.setPriceNum1(numbers[0]);
-                }
-            }
-        }
     }
 }

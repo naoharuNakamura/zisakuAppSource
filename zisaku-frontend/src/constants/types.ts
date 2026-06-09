@@ -91,7 +91,7 @@ export const SEARCH_CONFIG = {
 
 export const SEARCH_OPTIONS = {
     RATINGS: ['0~1.5', '1.5~2.5', '2.5~3.5', '3.5~4.5', '4.5~5.0'] as const,
-    PRICE_RANGES: ['〜¥2,000', '¥2,000〜¥4,000', '¥4,000〜¥6,000', '¥6,000〜'] as const,
+    PRICE_RANGES: ['¥1,000〜¥2,000', '¥2,000〜¥4,000', '¥4,000〜¥6,000', '¥6,000〜'] as const,
 } as const;
 
 export const REGEX = {

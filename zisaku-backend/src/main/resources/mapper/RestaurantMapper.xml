@@ -62,37 +62,46 @@
                     AND LOWER(restaurant_name) LIKE '%' || LOWER(#{restaurantName}) || '%' 
                 </if>
 
-                <if test="minRating != null"> 
-                    AND restaurant_rating <![CDATA[>=]]> #{minRating}
+                <if test="minRating != null and maxRating != null">
+                    AND (restaurant_rating BETWEEN #{minRating} AND #{maxRating})
                 </if>
+
+                <if test="restaurantPriceRange != null and restaurantPriceRange != ''">
+                    AND restaurant_price_range = #{restaurantPriceRange}
+                </if>   
 
                 <if test="restaurantGenre != null and restaurantGenre != ''">
                     AND restaurant_genre = #{restaurantGenre}
                 </if>
 
                 <if test="restaurantArea != null and restaurantArea != ''">
-                AND restaurant_area = #{restaurantArea} 
+                    AND restaurant_area = #{restaurantArea} 
                 </if>
 
             </if>
 
             <!-- OR検索 -->
-            <if test="isAndSearch == false">
+            <if test="isAndSearch != true">
+                <trim prefix="(" suffix=")" prefixOverrides="OR"></trim>
 
                 <if test="restaurantName != null and restaurantName != ''">
-                    AND LOWER(restaurant_name) LIKE '%' || LOWER(#{restaurantName}) || '%'
+                    OR LOWER(restaurant_name) LIKE '%' || LOWER(#{restaurantName}) || '%'
                 </if>
 
-                <if test="minRating != null">
-                    AND restaurant_rating <![CDATA[>=]]> #{minRating}
+                <if test="minRating != null and maxRating != null">
+                    OR (restaurant_rating BETWEEN #{minRating} AND #{maxRating})
+                </if>
+
+                <if test="restaurantPriceRange != null and restaurantPriceRange != ''">
+                    OR restaurant_price_range = #{restaurantPriceRange}
                 </if>
 
                 <if test="restaurantGenre != null and restaurantGenre != ''">
-                    AND restaurant_genre = #{restaurantGenre} 
+                    OR restaurant_genre = #{restaurantGenre} 
                 </if>
 
                 <if test="restaurantArea != null and restaurantArea != ''"> 
-                    AND restaurant_area = #{restaurantArea} 
+                    OR restaurant_area = #{restaurantArea} 
                 </if>
 
             </if>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import RestaurantCard from './RestaurantCard.vue';
 import { useRestaurantSearch } from '../composables/useRestaurantSearch';
@@ -42,10 +42,6 @@ onMounted(() => {
   fetchMasterData();
 });
 
-// 💡 修正ポイント①: isAndSearch も監視対象に含め、検索モード切替時にも自動で再検索を走らせる
-watch([() => route.query, isAndSearch], () => {
-  executeSearch(SEARCH_CONFIG.INITIAL_PAGE);
-}, { deep: true });
 
 // 💡 修正ポイント②: 「この条件で再検索」ボタンが押された時の専用処理
 const onSearchSubmit = () => {
@@ -77,7 +73,7 @@ const onSearchSubmit = () => {
 
 const onToggleSearchMode = () => {
   toggleSearchMode();
-  executeSearch(SEARCH_CONFIG.INITIAL_PAGE);
+  // executeSearch(SEARCH_CONFIG.INITIAL_PAGE);
 };
 </script>
 
@@ -114,7 +110,7 @@ const onToggleSearchMode = () => {
             {{ text.refineButton }}
           </button>
           <div v-show="isOpen" id="filter-accordion-content" class="accordion-content-box">
-            <form @submit.prevent="handleSearchSubmit" class="inner-search-form">
+            <form @submit.prevent="onSearchSubmit" class="inner-search-form">
 
               <div class="form-group-block">
                   <label for="filter-res-name">{{ text.storeNameLabel }}</label>
