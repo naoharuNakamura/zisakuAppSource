@@ -10,12 +10,4 @@ import lombok.Setter;
 public class UserRestaurantRequest {
     private int userId;
     private int restaurantId;
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public int getRestaurantId() {
-        return restaurantId;
-    }
 }

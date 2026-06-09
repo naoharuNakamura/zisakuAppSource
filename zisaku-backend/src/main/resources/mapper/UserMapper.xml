@@ -18,8 +18,8 @@
         SELECT * FROM m_user WHERE user_email = #{userEmail}
     </select>
     
-    <select id="existsByUserEmail" resultMap="UserResultMap">
-        SELECT COUNT(1) FROM m_user WHERE user_email = #{userEmail}
+    <select id="existsByUserEmail" resultType="boolean">
+        SELECT COUNT(1) > 0 FROM m_user WHERE user_email = #{userEmail}
     </select>
 
     <insert id="insert" parameterType="com.zisakuapp.zisaku_backend.model.User" useGeneratedKeys="true" keyProperty="userId">

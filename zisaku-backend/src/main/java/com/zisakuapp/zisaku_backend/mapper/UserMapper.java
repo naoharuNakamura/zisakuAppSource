@@ -11,7 +11,7 @@ public interface UserMapper {
 
     Optional<User> findByUserId(int userId);
 
-    boolean existsByUserEmail(String userEmail);
+    Boolean existsByUserEmail(String userEmail);
 
     void insert(User user);
 

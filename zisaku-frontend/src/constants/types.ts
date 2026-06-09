@@ -21,7 +21,7 @@ export const ROUTE_NAMES = {
 export const API_ENDPOINTS = {
     USER: {
         LOGIN: '/api/m_user/login',
-        CHECK_EMAIL: (userEmail: string) => `/api/m_user/check-email/${encodeURIComponent(userEmail)}`,
+        CHECK_EMAIL: (userEmail: string) => `/api/m_user/check-email?userEmail=${encodeURIComponent(userEmail)}`,
         SIGNUP: '/api/m_user/signup',
         UPDATE_PROFILE: '/api/m_user/profile'
     },

@@ -76,24 +76,23 @@ public class UserController {
         }
     }
 
-    // プロフィール更新
-    @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@RequestBody User updatedUser) {
-        try {
-            System.out.println(updatedUser);
-            // ロジックはServiceにお任せ
-            User savedUser = userService.updateProfile(updatedUser);
-            UserResponse userResponse = new UserResponse(savedUser);
-            return ResponseEntity.ok(userResponse);
-        } catch (RuntimeException e) {
-            // ユーザーが見つからなかった場合など
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+@PutMapping("/profile")
+public ResponseEntity<?> updateProfile(@RequestBody User updatedUser) {
+    try {
+        User savedUser = userService.updateProfile(updatedUser);
+        return ResponseEntity.ok(new UserResponse(savedUser));
+    } catch (RuntimeException e) {
+        // メッセージの内容でエラーの種類を判断する
+        if (e.getMessage().contains("既に他のユーザーに使用されています")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
+        // それ以外は404エラーとして処理
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
+}
 
-    @GetMapping("/check-email/{userEmail:.+}")
-    public ResponseEntity<Boolean> checkEmailExists(@PathVariable("userEmail") String userEmail) {
+    @GetMapping("/check-email")
+    public ResponseEntity<Boolean> checkEmailExists(@RequestParam("userEmail") String userEmail) {
         // サービス層で存在チェックを行い、結果（boolean）を返す
         boolean exists = userService.existsByUserEmail(userEmail);
         return ResponseEntity.ok(exists);

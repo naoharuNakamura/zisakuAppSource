@@ -1,7 +1,13 @@
 package com.zisakuapp.zisaku_backend.dto;
 
 import com.zisakuapp.zisaku_backend.model.Restaurant;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
 
+@Getter
+@Setter
+@NoArgsConstructor // 引数なしコンストラクタが必要な場合に便利
 public class RestaurantResponse {
     private int restaurantId;
     private String restaurantName;
@@ -52,18 +58,4 @@ public class RestaurantResponse {
         this.restaurantUrl = restaurant.getRestaurantUrl();
     }
 
-    // ゲッター群
-    public int getRestaurantId() { return restaurantId; }
-    public String getRestaurantName() { return restaurantName; }
-    public String getRestaurantGenre() { return restaurantGenre; }
-    public String getRestaurantArea() { return restaurantArea; }
-    public String getRestaurantImg() { return restaurantImg; }
-    public Double getRestaurantRating() { return restaurantRating; }
-    public String getRestaurantPriceRange() { return restaurantPriceRange; }
-    public String getRestaurantOpenHour() { return restaurantOpenHour; }
-    public String getRestaurantCloseHour() { return restaurantCloseHour; }
-    public String getRestaurantClosedDays() { return restaurantClosedDays; }
-    public String getRestaurantPhone() { return restaurantPhone; }
-    public String getRestaurantAddress() { return restaurantAddress; }
-    public String getRestaurantUrl() { return restaurantUrl; }
 }

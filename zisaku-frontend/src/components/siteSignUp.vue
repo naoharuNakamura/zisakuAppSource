@@ -144,6 +144,7 @@ const validateForm = async () => {
         } catch (error) {
             console.error(ERROR_MESSAGES.DUPLICATE_CHECK_FAILED, error);
             // 500エラーなどが起きた場合はとりあえずここに入る
+            isValid = false;
         }
     }
 
