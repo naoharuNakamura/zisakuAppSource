@@ -165,7 +165,7 @@ const onToggleSearchMode = () => {
 
                 <div class="submit-btns">
                   <button @click="clearQuery" class="inner-clear-btn" type="button">{{ text.clearText }}</button>
-                  <button class="inner-submit-btn" type="submit" @click="onSearchSubmit">{{ text.infoSearchButton }}</button>
+                  <button class="inner-submit-btn" type="submit">{{ text.infoSearchButton }}</button>
                 </div>
               </div>
 
