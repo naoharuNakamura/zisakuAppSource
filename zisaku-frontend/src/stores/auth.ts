@@ -3,7 +3,7 @@
 import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import { apiService } from '../services/api';
-import {type UserResponse, type Restaurant, STORAGE_KEYS } from '../constants/types';
+import { type UserResponse, type Restaurant, STORAGE_KEYS } from '../constants/types';
 import { ERROR_MESSAGES } from '../constants/messages';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -99,18 +99,36 @@ export const useAuthStore = defineStore('auth', () => {
         if (!currentUser.value) return;
 
         try {
-            await apiService.toggleFavorite({
+            const response = await apiService.toggleFavorite({
                 userId: currentUser.value.userId,
                 restaurantId: restaurantId
             });
-            // サーバーから最新状態を再取得
+
+            // 2. サーバーのレスポンス (added/removed) に応じて、フロントのID配列を直接書き換える
+            // サーバーから再取得するのを待たず、今の状態を正とする
+            if (!currentUser.value.favoriteIds) {
+                currentUser.value.favoriteIds = [];
+            }
+
+            if (response.data.status === 'added') {
+                if (!currentUser.value.favoriteIds.includes(restaurantId)) {
+                    currentUser.value.favoriteIds.push(restaurantId);
+                }
+            } else {
+                currentUser.value.favoriteIds = currentUser.value.favoriteIds.filter(id => id !== restaurantId);
+            }
+
+            // 3. localStorage を最新状態に同期
+            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser.value));
+
+            // （任意）バックエンドとの完全な整合性を取るために、念のため再取得を行う
             await fetchFavoriteIds(currentUser.value.userId);
             await fetchFavoriteRestaurants(currentUser.value.userId);
+
         } catch (error) {
-            console.error(ERROR_MESSAGES.FAVORITE_UPDATE_FAILED_LOG, error);
+            console.error("お気に入り更新失敗:", error);
         }
     };
-
     return {
         currentUser,
         isLoggedIn,

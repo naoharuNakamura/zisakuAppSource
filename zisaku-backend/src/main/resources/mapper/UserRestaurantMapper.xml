@@ -3,13 +3,11 @@
 <mapper namespace="com.zisakuapp.zisaku_backend.mapper.UserRestaurantMapper">
 
     <resultMap id="UserRestaurantResultMap" type="com.zisakuapp.zisaku_backend.model.UserRestaurant">
+        <id column="user_id" property="id.userId"/>
+        <id column="restaurant_id" property="id.restaurantId"/>
+        
         <result column="is_favorite" property="isFavorite"/>
         <result column="user_memo" property="userMemo"/>
-        
-        <association property="id" javaType="com.zisakuapp.zisaku_backend.model.UserRestaurant$UserRestaurantId">
-            <result column="user_id" property="userId"/>
-            <result column="restaurant_id" property="restaurantId"/>
-        </association>
     </resultMap>
 
     <select id="findAll" resultMap="UserRestaurantResultMap">

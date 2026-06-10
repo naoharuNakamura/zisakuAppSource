@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class UserRestaurantService {
 
     @Autowired
@@ -26,7 +27,6 @@ public class UserRestaurantService {
         return userRestaurantMapper.findAll();
     }
 
-    @Transactional
     public UserRestaurantResponse toggleFavorite(int userId, int restaurantId) {
         Optional<UserRestaurant> existing = userRestaurantMapper.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
 
@@ -60,13 +60,12 @@ public class UserRestaurantService {
             UserRestaurant.UserRestaurantId id = new UserRestaurant.UserRestaurantId(userId, restaurantId);
             userRestaurant.setId(id);
             userRestaurant.setIsFavorite(true);
-
+            System.out.println(userRestaurant);
             userRestaurantMapper.upsert(userRestaurant);
             return new UserRestaurantResponse("added");
         }
     }
 
-    @Transactional
     public UserRestaurant getMemoRestaurant(int userId, int restaurantId) {
         Optional<UserRestaurant> existing = userRestaurantMapper.findByIdUserIdAndIdRestaurantId(userId, restaurantId);
         return existing.orElse(null);
@@ -86,26 +85,33 @@ public class UserRestaurantService {
             userRestaurant.setUserMemo(memo);
             userRestaurant.setIsFavorite(false);
         }
-
+        System.out.println(userRestaurant);
         userRestaurantMapper.upsert(userRestaurant);
         return userRestaurant;
     }
 
     public List<Integer> getUserFavorites(int userId) {
         List<UserRestaurant> favorites = userRestaurantMapper.findByIdUserId(userId);
+        System.out.println(favorites);
         return favorites.stream()
                 .filter(fav -> Boolean.TRUE.equals(fav.getIsFavorite()))
                 .map(fav -> fav.getId().getRestaurantId())
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<Restaurant> getFavoriteDetails(int userId) {
         List<UserRestaurant> favorites = userRestaurantMapper.findByIdUserId(userId);
+
+        favorites.forEach(f -> System.out
+                .println("DEBUG: Restaurant=" + f.getId().getRestaurantId() + ", IsFavorite=" + f.getIsFavorite()));
 
         List<Integer> ids = favorites.stream()
                 .filter(r -> Boolean.TRUE.equals(r.getIsFavorite()))
                 .map(r -> r.getId().getRestaurantId())
                 .toList();
+
+        System.out.println("DEBUG: Filtered IDs=" + ids);
 
         if (ids.isEmpty()) {
             return List.of();

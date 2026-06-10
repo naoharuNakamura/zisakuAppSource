@@ -69,7 +69,9 @@ public class UserRestaurantController {
 
         var opt = userRestaurantService.getUserRestaurant(userId, restaurantId);
         if (opt.isPresent()) {
-            return ResponseEntity.ok(Map.of("memo", opt.get().getUserMemo()));
+        // メモを取得し、nullであれば空文字に変換する
+            String memo = opt.get().getUserMemo();
+            return ResponseEntity.ok(Map.of("memo", memo != null ? memo : ""));
         } else {
             return ResponseEntity.ok(Map.of("memo", ""));
         }
